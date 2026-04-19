@@ -1,4 +1,4 @@
- import streamlit as st
+import streamlit as st
 import pandas as pd
 from scipy.cluster.hierarchy import linkage, dendrogram
 import matplotlib.pyplot as plt

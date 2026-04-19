@@ -1,31 +1,45 @@
 import streamlit as st
+import pandas as pd
+from scipy.cluster.hierarchy import linkage, dendrogram
 import matplotlib.pyplot as plt
 
-def teken_v_cladogram(soorten):
-    fig, ax = plt.subplots(figsize=(8, 6))
-    n = len(soorten)
-    
-    # We tekenen handmatig de lijnen voor een V-vorm
-    for i, soort in enumerate(soorten):
-        # Lijnen trekken vanuit het midden naar de uiteinden
-        ax.plot([0, 1], [0, i], color='black', lw=2)
-        ax.text(1.05, i, soort, fontsize=12, va='center')
-    
-    ax.set_title("V-vormig Cladogram", fontsize=16)
-    ax.axis('off') # Verwijder de assen
-    return fig
+st.title("Cladogram op basis van Eigenschappen")
 
-st.title("Eenvoudige Cladogram Maker")
+st.write("Vul de tabel in: 1 = Ja, 0 = Nee")
 
-# Makkelijke invoer: een simpele lijst
-input_data = st.text_area("Typ de namen van je soorten (één per regel):", 
-                          "Mens\nChimpansee\nGorilla\nOrang-oetan")
+# 1. Maak een standaard tabelletje als voorbeeld
+data = {
+    'Huidmondjes': [1, 1, 1, 0],
+    'Zaden': [1, 1, 0, 0],
+    'Bloemen': [1, 0, 0, 0]
+}
+df = pd.DataFrame(data, index=['Zonnebloem', 'Den', 'Varen', 'Alg'])
 
-soorten_lijst = [s.strip() for s in input_data.split('\n') if s.strip()]
+# 2. Laat de gebruiker de tabel bewerken in Streamlit
+edited_df = st.data_editor(df)
 
-if st.button("🔄 Teken Cladogram"):
-    if soorten_lijst:
-        fig = teken_v_cladogram(soorten_lijst)
+if st.button("🔄 Genereer Cladogram"):
+    try:
+        # Bereken de afstanden tussen de soorten op basis van de 1-en en 0-en
+        # We gebruiken 'ward' linkage voor een mooie boomstructuur
+        Z = linkage(edited_df, method='ward')
+        
+        fig, ax = plt.subplots(figsize=(8, 5))
+        
+        # Teken het dendrogram (wat in feite een cladogram is)
+        dendrogram(
+            Z,
+            labels=edited_df.index,
+            orientation='left', # 'left' zorgt voor de klassieke zijwaartse boom
+            ax=ax,
+            color_threshold=0 # Houdt de lijnen standaard zwart/blauw
+        )
+        
+        ax.set_title("Evolutionaire Verwantschap")
+        ax.set_xlabel("Afstand (verschil in eigenschappen)")
         st.pyplot(fig)
-    else:
-        st.error("Voer eerst wat namen in!")
+        
+    except Exception as e:
+        st.error(f"Er ging iets mis: {e}")
+
+st.info("De soorten die de meeste 'enen' delen, komen dichter bij elkaar te staan.")

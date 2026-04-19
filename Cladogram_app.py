@@ -23,29 +23,7 @@ if 'df' not in st.session_state:
 # Bewerkbare tabel tonen
 edited_df = st.data_editor(st.session_state.df, num_rows="dynamic")
 
-if st.button("🔄 Genereer Cladogram"):
-    try:
-        # 2. Hele simpele logica om verwantschap te bepalen op basis van aantal '1-tjes'
-        # We tellen hoeveel kenmerken elke soort heeft
-        soorten = [col for col in edited_df.columns if col != 'Kenmerk']
-        scores = {soort: edited_df[soort].sum() for soort in soorten}
-        
-        # Sorteer soorten op basis van complexiteit (aantal kenmerken)
-        gesorteerd = sorted(scores.items(), key=lambda x: x[1])
-        
-        # Bouw een simpele Newick string (stapsgewijze vertakking)
-        # Voorbeeld: (Vis,(Hagedis,Hond));
-        newick = gesorteerd[0][0]
-        for i in range(1, len(gesorteerd)):
-            newick = f"({newick},{gesorteerd[i][0]})"
-        newick += ";"
 
-        # 3. Teken de boom
-        tree = Phylo.read(StringIO(newick), "newick")
-        fig, ax = plt.subplots(figsize=(8, 5))
-        Phylo.draw(tree, axes=ax, do_show=False)
-        plt.axis('off')
-        st.pyplot(fig)
 
         # 4. Download knop
         buf = BytesIO()

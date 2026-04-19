@@ -11,9 +11,9 @@ st.title("Diagonaal Vertebrata Cladogram")
 # 1. Data voor Vertebrata
 data = {
     'Wervels': [1, 1, 1, 1, 1, 0],
-    'Kaken': [1, 1, 1, 1, 0, 0],
-    'Poten': [1, 1, 1, 0, 0, 0],
-    'Amnion': [1, 1, 0, 0, 0, 0],
+    'Kaken':   [1, 1, 1, 1, 0, 0],
+    'Poten':   [1, 1, 1, 0, 0, 0],
+    'Amnion':  [1, 1, 0, 0, 0, 0],
     'Haar/Melk': [1, 0, 0, 0, 0, 0]
 }
 index = ['Mens', 'Krokodil', 'Kikker', 'Haai', 'Prik', 'Vlieg']
@@ -47,11 +47,12 @@ if st.button("🔄 Teken Diagonaal Cladogram"):
                 ax.text(x_node + 2, y_node, f" {kenmerken[i]}", 
                         color='red', fontweight='bold', va='center')
 
-        # X-as instellen
-        unique_icoords = np.sort(np.unique(np.array(ddata['icoord']).flatten()))
-        ax.set_xticks(unique_icoords[::2])
+        # FIX: Handmatige X-as locaties die ALTIJD matchen met het aantal labels
+        x_ticks = np.arange(5, len(sorted_df) * 10, 10)
+        ax.set_xticks(x_ticks)
         ax.set_xticklabels(ddata['ivl'], rotation=45, ha='right')
 
+        # Layout opschonen
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         ax.spines['left'].set_visible(False)
@@ -61,7 +62,7 @@ if st.button("🔄 Teken Diagonaal Cladogram"):
         
         buf = BytesIO()
         fig.savefig(buf, format="png", bbox_inches='tight')
-        st.download_button("💾 Download Diagonaal Cladogram", buf.getvalue(), "diagonaal.png")
+        st.download_button("💾 Download Diagonaal Cladogram", buf.getvalue(), "cladogram_diagonaal.png")
         
     except Exception as e:
         st.error(f"Fout: {e}")

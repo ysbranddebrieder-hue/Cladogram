@@ -3,40 +3,40 @@ from Bio import Phylo
 from io import StringIO
 import matplotlib.pyplot as plt
 
-st.title("🧬 Interactieve Cladogram Maker")
+st.set_page_config(page_title="Cladogram Maker", layout="centered")
 
-# Input: Gebruiker kan een Newick string plakken
+st.title("🧬 Cladogram Maker")
+
+# Tekstveld voor de Newick string
 newick_input = st.text_area(
-    "Plak hier je Newick string:", 
-    "(Mens:0.1, (Chimp:0.1, Gorilla:0.2):0.1);"
+    "Voer je Newick string in:", 
+    "(Mens, (Chimp, Gorilla));",
+    height=150
 )
 
-if newick_input:
-    try:
-        # Lees de boom in vanuit de string
-        tree = Phylo.read(StringIO(newick_input), "newick")
-        
-        # Instellingen voor de visualisatie
-        st.sidebar.header("Instellingen")
-        tree_type = st.sidebar.selectbox("Type:", ["cladogram", "phylogram"])
-        
-        # Maak de plot
-        fig = plt.figure(figsize=(10, 5))
-        ax = fig.add_subplot(1, 1, 1)
-        
-        # Teken de boom
-        Phylo.draw(tree, axes=ax, do_show=False, branch_labels=lambda c: "")
-        
-        # Streamlit display
-        st.pyplot(fig)
-        
-        # Download optie
-        st.download_button(
-            label="Download Cladogram als afbeelding",
-            data=StringIO(newick_input).read(),
-            file_name="cladogram.nwk"
-        )
-        
-    except Exception as e:
-        st.error(f"Fout bij het laden van de boom: {e}")
+# De knop om het tekenen te forceren
+if st.button("🔄 Teken Cladogram"):
+    if newick_input:
+        try:
+            # Lees de boom in
+            tree = Phylo.read(StringIO(newick_input), "newick")
+            
+            # Maak de visualisatie
+            fig = plt.figure(figsize=(10, 6))
+            ax = fig.add_subplot(1, 1, 1)
+            
+            # Teken de boom (cladogram stijl)
+            Phylo.draw(tree, axes=ax, do_show=False)
+            
+            # Verwijder assen voor een schoner beeld
+            plt.axis('off')
+            
+            # Toon in Streamlit
+            st.pyplot(fig)
+            
+        except Exception as e:
+            st.error(f"Er zit een fout in je Newick string: {e}")
+    else:
+        st.warning("Voer eerst een Newick string in.")
 
+st.info("Tip: Gebruik haakjes, komma's en eindig met een puntkomma (;)")

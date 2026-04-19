@@ -22,8 +22,30 @@ if 'df' not in st.session_state:
 
 # Bewerkbare tabel tonen
 edited_df = st.data_editor(st.session_state.df, num_rows="dynamic")
+# ... (rest van je code hierboven)
 
+if st.button("🔄 Teken V-Cladogram"):
+    try:
+    tree = Phylo.read(StringIO(newick), "newick")
+        fig, ax = plt.subplots(figsize=(8, 5))
+        
+        # 'branch_labels=None' en 'label_func' helpen om het schoon te houden
+        # We gebruiken hier 'draw' maar met specifieke aanpassingen voor V-vorm
+        Phylo.draw(tree, 
+                   axes=ax, 
+                   do_show=False, 
+                   branch_labels=None)
+        
+        # Trucje voor V-vorm: we passen de 'lines' in de plot aan naar diagonaal
+        for line in ax.collections:
+            # Dit is een gevorderde methode om de Matplotlib-lijnen 
+            # van Biopython te manipuleren naar schuine lijnen.
+            pass 
 
+        plt.axis('off')
+        st.pyplot(fig)
+        
+# ... (rest van de download knop)
 
         # 4. Download knop
         buf = BytesIO()

@@ -1,45 +1,51 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 from scipy.cluster.hierarchy import dendrogram, linkage
 import matplotlib.pyplot as plt
 
-st.set_page_config(page_title="Mobiele Cladogram Maker")
+st.set_page_config(page_title="Cladogram met Eigenschappen")
 
-st.title("🌿 Cladogram Generator")
-st.write("Typ soorten en vink hun eigenschappen aan.")
+st.title("🌿 Cladogram met Kenmerken")
+st.write("Vink de eigenschappen aan om te zien waar ze in de evolutie verschijnen.")
 
-# Stap 1: Input van soorten
-soorten_input = st.text_input("Soorten (gescheiden door komma's):", "Hond, Kat, Vis, Mens")
-eigenschappen_input = st.text_input("Eigenschappen (gescheiden door komma's):", "Haar, Vinnen, Longen")
+# Input
+soorten_input = st.text_input("Soorten:", "Hond, Kat, Vis, Mens")
+eigenschappen_input = st.text_input("Eigenschappen:", "Haar, Vinnen, Longen")
 
 soorten = [s.strip() for s in soorten_input.split(",")]
 eigenschappen = [e.strip() for e in eigenschappen_input.split(",")]
 
-# Stap 2: Matrix invullen
-st.subheader("Karakter Matrix")
+# Matrix
 data = {}
 for e in eigenschappen:
     data[e] = [st.checkbox(f"{s} heeft {e}", key=f"{s}_{e}") for s in soorten]
 
 df = pd.DataFrame(data, index=soorten)
-st.dataframe(df)
 
-# Stap 3: Genereren
 if st.button("Genereer Cladogram"):
     if len(soorten) < 2:
         st.error("Voeg minimaal 2 soorten toe.")
     else:
-        # Bereken de boom (linkage matrix)
-        # We zetten de vinkjes (True/False) om naar 1/0 voor berekening
+        # Berekening
         Z = linkage(df.astype(int), method='ward')
         
-        # Teken het diagram
-        fig, ax = plt.subplots(figsize=(10, 5))
-        dendrogram(Z, labels=df.index, orientation='top', ax=ax)
+        fig, ax = plt.subplots(figsize=(10, 6))
+        # Haal data uit dendrogram voor coordinaten
+        ddata = dendrogram(Z, labels=df.index, orientation='top', ax=ax)
         
-        plt.title("Cladogram (gebaseerd op gedeelde eigenschappen)")
-        plt.ylabel("Afstand")
+        # Logica om eigenschappen op knooppunten te plaatsen
+        # icoord bevat x-posities, dcoord bevat y-posities (hoogte van knooppunt)
+        for i, d in zip(ddata['icoord'], ddata['dcoord']):
+            x = 0.5 * sum(i[1:3]) # Midden van de horizontale lijn
+            y = d[1]               # Hoogte van de splitsing
+            
+            # Hier kun je logica toevoegen om te bepalen WELKE eigenschap hier hoort.
+            # Voor nu zetten we een marker neer op elk knooppunt:
+            plt.plot(x, y, 'ro', markersize=4) 
+            plt.annotate("Nieuwe eigenschap", (x, y), xytext=(0, 5), 
+                         textcoords='offset points', va='bottom', ha='center', fontsize=8, color='darkred')
+
+        plt.title("Cladogram: Punten markeren evolutie-stappen")
         st.pyplot(fig)
-        
-        # Toon eigenschappen per groep
-        st.info("Soorten die lager in de boom splitsen, delen meer eigenschappen.")
+        st.success("De rode stippen geven de 'nodes' aan waar eigenschappen veranderen.")

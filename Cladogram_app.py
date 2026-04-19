@@ -3,67 +3,73 @@ import pandas as pd
 from scipy.cluster.hierarchy import linkage, dendrogram
 import matplotlib.pyplot as plt
 import numpy as np
+from io import BytesIO
 
 st.set_page_config(layout="wide")
-st.title("Ultieme Cladogram Generator")
+st.title("Verticaal Cladogram met Downloadoptie")
 
-# 1. De Data (Matrix) - Standaard voorbeeld
+# 1. De Biologische Data (Vertebrata)
 data = {
-    'Wervels': [1, 1, 1, 1, 0],
-    'Longen':  [1, 1, 1, 0, 0],
-    'Haar':    [1, 1, 0, 0, 0],
-    'Duim':    [1, 0, 0, 0, 0]
+    'Wervelkolom': [1, 1, 1, 1, 1, 1],
+    'Kaken':      [0, 1, 1, 1, 1, 1],
+    'Poten':      [0, 0, 1, 1, 1, 1],
+    'Amnion (ei)': [0, 0, 0, 1, 1, 1],
+    'Haar/Melk':  [0, 0, 0, 0, 1, 1],
+    'Rechtop':    [0, 0, 0, 0, 0, 1]
 }
-index = ['Mens', 'Hond', 'Hagedis', 'Vis', 'Vlieg']
+index = ['Prik', 'Haai', 'Kikker', 'Krokodil', 'Hond', 'Mens']
 df = pd.DataFrame(data, index=index)
 
-st.subheader("1. Karaktermatrix aanpassen")
-st.write("Verander de 1-en en 0-en om de evolutie te beïnvloeden.")
+st.subheader("1. Bewerk de Karaktermatrix")
 edited_df = st.data_editor(df, use_container_width=True)
 
-if st.button("🔄 Genereer Gecorrigeerd Cladogram"):
+if st.button("🔄 Teken Verticaal Cladogram"):
     try:
-        # We sorteren de data eerst op aantal kenmerken voor een stabielere boom
+        # Sorteren en boom berekenen
         sorted_df = edited_df.iloc[np.argsort(edited_df.sum(axis=1))]
-
-        # 'weighted' en 'optimal_ordering' zorgen voor de juiste plaatsing van soorten
         Z = linkage(sorted_df, method='weighted', optimal_ordering=True)
         
-        fig, ax = plt.subplots(figsize=(12, 8))
+        fig, ax = plt.subplots(figsize=(12, 10))
         
-        # Teken de boom
+        # Teken de verticale boom
         ddata = dendrogram(
             Z, 
             labels=sorted_df.index, 
-            orientation='right', 
+            orientation='top', 
             ax=ax,
             above_threshold_color='black'
         )
         
-        # Eigenschappen op de kruispunten plaatsen
-        # We kijken welke eigenschap per stap 'bijkomt'
+        # Labels en rode streepjes toevoegen
         kenmerken = sorted_df.columns
         for i, node in enumerate(Z):
-            # Bereken positie van het kruispunt
-            x_pos = node[2]
-            y_pos = np.mean(ddata['icoord'][i][1:3])
+            x_pos = np.mean(ddata['icoord'][i][1:3])
+            y_pos = node
             
-            # Label toevoegen (gebaseerd op kolomvolgorde)
             if i < len(kenmerken):
                 label = kenmerken[i]
-                ax.plot(x_pos, y_pos, '|', color='red', markersize=15, markeredgewidth=3)
-                ax.text(x_pos + 0.1, y_pos, f" {label}", color='red', 
-                        fontweight='bold', va='center', fontsize=11)
+                ax.plot(x_pos, y_pos, '_', color='red', markersize=30, markeredgewidth=5)
+                ax.text(x_pos, y_pos + 0.15, label, color='red', 
+                        fontweight='bold', fontsize=11, ha='center')
 
-        ax.set_title("Cladogram met evolutionaire innovaties", fontsize=15)
-        ax.set_xlabel("Evolutionaire afstand")
+        ax.set_title("Evolutie van de Vertebrata", fontsize=18)
+        ax.set_ylabel("Evolutionaire afstand")
+        plt.xticks(rotation=45)
         
-        # Toon de plot
+        # Toon de plot in de app
         st.pyplot(fig)
         
-        st.success("Boom succesvol gegenereerd. De mens en hond staan nu correct gegroepeerd!")
-
+        # --- DOWNLOAD LOGICA ---
+        buf = BytesIO()
+        fig.savefig(buf, format="png", bbox_inches='tight', dpi=300)
+        st.download_button(
+            label="💾 Download Cladogram als PNG",
+            data=buf.getvalue(),
+            file_name="vertebrata_cladogram.png",
+            mime="image/png"
+        )
+        
     except Exception as e:
-        st.error(f"Fout bij het genereren: {e}")
+        st.error(f"Fout: {e}")
 
-st.info("Tip: Als de mens en hond nog steeds wisselen, voeg dan een extra kolom toe (bijv. 'Taal') waar de Mens een 1 heeft en de Hond een 0.")
+st.info("Klik op de knop hierboven om de afbeelding op te slaan na het genereren.")

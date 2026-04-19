@@ -25,7 +25,7 @@ col1, col2 = st.columns([2, 1])
 
 with col1:
     st.subheader("2. Het Cladogram")
-    if st.button("🔄 Genereer Boom"):
+    if st.button("🔄 Genereer Cladogram"):
         try:
             # Berekening van de boomstructuur
             Z = linkage(edited_df, method='ward')

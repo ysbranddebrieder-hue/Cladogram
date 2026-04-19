@@ -22,6 +22,18 @@ if 'df' not in st.session_state:
 
 # Bewerkbare tabel tonen
 edited_df = st.data_editor(st.session_state.df, num_rows="dynamic")
+if st.button("🔄 Teken V-Cladogram"):
+    try:
+        # Alles hieronder moet één niveau extra inspringen t.o.v. 'try'
+        tree = Phylo.read(StringIO(newick), "newick")
+        fig, ax = plt.subplots(figsize=(8, 5))
+        
+        # 'branch_labels=None' en 'label_func' helpen om het schoon te houden
+        Phylo.draw(tree, 
+                   axes=ax,
+                   do_show=False) # Vergeet do_show=False niet bij Streamlit!
+    except Exception as e:
+        st.error(f"Fout bij het tekenen: {e}")
 
                    do_show=False, 
                    branch_labels=None)

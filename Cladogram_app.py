@@ -1,74 +1,59 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 from scipy.cluster.hierarchy import linkage, dendrogram
 import matplotlib.pyplot as plt
 
-st.set_page_config(page_title="Evolutie Cladogram", layout="wide")
+# ... (Hetzelfde input gedeelte als hiervoor) ...
 
-st.title("🌿 Slim Cladogram")
-st.write("De app berekent automatisch waar eigenschappen in de stamboom verschijnen.")
-
-# 1. Input sectie
-col1, col2 = st.columns(2)
-with col1:
-    soorten_input = st.text_input("Soorten (komma-gescheiden):", "Hond, Kat, Vis, Mens")
-with col2:
-    eigenschappen_input = st.text_input("Eigenschappen (komma-gescheiden):", "Haar, Vinnen, Longen")
-
-soorten = [s.strip() for s in soorten_input.split(",")]
-eigenschappen = [e.strip() for e in eigenschappen_input.split(",")]
-
-# 2. Karakter Matrix Invullen
-st.subheader("Vink aan wat van toepassing is:")
-data = {}
-cols = st.columns(len(soorten))
-for i, s in enumerate(soorten):
-    with cols[i]:
-        st.write(f"**{s}**")
-        data[s] = [st.checkbox(f"{e}", key=f"{s}_{e}") for e in eigenschappen]
-
-df = pd.DataFrame(data, index=eigenschappen).T
-
-# 3. Berekening en Visualisatie
-if st.button("Genereer Cladogram met Labels"):
+if st.button("Genereer Uitgebreid Cladogram"):
     if len(soorten) < 2:
         st.error("Voeg meer soorten toe.")
     else:
-        # Bereken de boomstructuur
-        Z = linkage(df.astype(int), method='ward')
+        # Maak nieuwe labels voor de onderkant: "Soort (Eigenschap1, Eigenschap2)"
+        nieuwe_labels = []
+        for s in soorten:
+            # Zoek alle eigenschappen die 'True' zijn voor deze soort
+            soort_traits = df.loc[s]
+            actieve_traits = soort_traits[soort_traits].index.tolist()
+            if actieve_traits:
+                label = f"{s}\n({', '.join(actieve_traits)})"
+            else:
+                label = s
+            nieuwe_labels.append(label)
         
-        fig, ax = plt.subplots(figsize=(10, 7))
-        ddata = dendrogram(Z, labels=df.index, orientation='top', ax=ax)
+        # Tijdelijke dataframe met de nieuwe labels voor de berekening
+        df_plot = df.copy()
+        df_plot.index = nieuwe_labels
+
+        # Berekening
+        Z = linkage(df_plot.astype(int), method='ward')
         
-        # Logica om eigenschappen aan knooppunten te koppelen
-        n_species = len(df)
+        fig, ax = plt.subplots(figsize=(10, 8))
+        # Gebruik de nieuwe_labels in de dendrogram
+        ddata = dendrogram(Z, labels=df_plot.index, orientation='top', ax=ax)
+        
+        # Logica voor de knooppunten (de rode stippen van de vorige stap)
+        n_species = len(df_plot)
         clusters = {i: [i] for i in range(n_species)}
         
-        # Loop door de splitsingen in de boom
         for i, merge in enumerate(Z):
             node_id = n_species + i
-            child1, child2 = int(merge[0]), int(merge[1])
-            members = clusters[child1] + clusters[child2]
+            members = clusters[int(merge[0])] + clusters[int(merge[1])]
             clusters[node_id] = members
             
-            # Zoek eigenschappen die ALLE leden van dit cluster hebben
             common_traits = df.iloc[members].all()
             traits_list = common_traits[common_traits].index.tolist()
             
-            # Verwijder eigenschappen die al bij een 'hoger' (eerder) knooppunt horen
-            # (Heel simpel: toon alleen de eerste keer dat een eigenschap verschijnt)
-            
-            # Vind de coördinaten voor dit knooppunt in de plot
             x = 0.5 * sum(ddata['icoord'][i][1:3])
-            y = ddata['dcoord'][i][1]
+            y = ddata['dcoord'][i]
             
             if traits_list:
-                label = "\n".join(traits_list)
-                plt.plot(x, y, 'ro', markersize=6)
-                plt.annotate(label, (x, y), xytext=(5, 5), 
-                             textcoords='offset points', fontsize=9, 
-                             color='blue', fontweight='bold', ha='left')
+                plt.plot(x, y, 'ro', markersize=5)
+                plt.annotate(", ".join(traits_list), (x, y), xytext=(5, 5), 
+                             textcoords='offset points', fontsize=8, color='blue')
 
-        plt.title("Cladogram: Blauwe tekst toont nieuwe eigenschappen")
+        # Zorg dat de tekst aan de onderkant goed leesbaar is
+        plt.xticks(rotation=45, ha='right')
+        plt.subplots_adjust(bottom=0.3) # Ruimte voor lange teksten onderaan
+        
         st.pyplot(fig)

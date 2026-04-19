@@ -1,4 +1,4 @@
- import streamlit as st
+import streamlit as st
 import pandas as pd
 from scipy.cluster.hierarchy import linkage, dendrogram
 import matplotlib.pyplot as plt
@@ -8,13 +8,13 @@ from io import BytesIO
 st.set_page_config(layout="wide")
 st.title("Diagonaal Vertebrata Cladogram")
 
-# 1. Data voor Vertebrata (Nu met ingevulde waarden om de error te voorkomen)
+# 1. Data voor Vertebrata
 data = {
     'Wervels': [1, 1, 1, 1, 1, 0],
-    'Kaken':   [1, 1, 1, 1, 0, 0],
-    'Poten':   [1, 1, 1, 0, 0, 0],
-    'Amnion':  [1, 1, 0, 0, 0, 0],
-    'Haar/Melk':[1, 0, 0, 0, 0, 0]
+    'Kaken': [1, 1, 1, 1, 0, 0],
+    'Poten': [1, 1, 1, 0, 0, 0],
+    'Amnion': [1, 1, 0, 0, 0, 0],
+    'Haar/Melk': [1, 0, 0, 0, 0, 0]
 }
 index = ['Mens', 'Krokodil', 'Kikker', 'Haai', 'Prik', 'Vlieg']
 df = pd.DataFrame(data, index=index)
@@ -29,8 +29,6 @@ if st.button("🔄 Teken Diagonaal Cladogram"):
         Z = linkage(sorted_df, method='weighted', optimal_ordering=True)
         
         fig, ax = plt.subplots(figsize=(10, 8))
-        
-        # Bereken de boom coördinaten
         ddata = dendrogram(Z, labels=sorted_df.index, no_plot=True)
 
         # Teken handmatig de schuine lijnen
@@ -49,11 +47,11 @@ if st.button("🔄 Teken Diagonaal Cladogram"):
                 ax.text(x_node + 2, y_node, f" {kenmerken[i]}", 
                         color='red', fontweight='bold', va='center')
 
-        # X-as instellen voor de dierennamen
-        ax.set_xticks(np.arange(5, len(sorted_df) * 10 + 5, 10))
+        # X-as instellen
+        unique_icoords = np.sort(np.unique(np.array(ddata['icoord']).flatten()))
+        ax.set_xticks(unique_icoords[::2])
         ax.set_xticklabels(ddata['ivl'], rotation=45, ha='right')
 
-        # Layout opschonen
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         ax.spines['left'].set_visible(False)
@@ -61,10 +59,9 @@ if st.button("🔄 Teken Diagonaal Cladogram"):
         
         st.pyplot(fig)
         
-        # Download knop
         buf = BytesIO()
         fig.savefig(buf, format="png", bbox_inches='tight')
-        st.download_button("💾 Download Diagonaal Cladogram", buf.getvalue(), "diagonaal_cladogram.png")
+        st.download_button("💾 Download Diagonaal Cladogram", buf.getvalue(), "diagonaal.png")
         
     except Exception as e:
         st.error(f"Fout: {e}")

@@ -10,7 +10,7 @@ st.title("🌿 Cladogram met Knooppunt-Eigenschappen")
 
 # 1. Input
 soorten_input = st.text_input("Soorten:", "Hond, Kat, Vis, Mens")
-eigenschappen_input = st.text_input("Eigenschappen:", "Haar, Vinnen, Longen")
+eigenschappen_input = st.text_input("Eigenschappen:", "Haar, Vinnen, Longen, Duim")
 
 soorten = [s.strip() for s in soorten_input.split(",") if s.strip()]
 eigenschappen = [e.strip() for e in eigenschappen_input.split(",") if e.strip()]

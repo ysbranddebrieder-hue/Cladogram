@@ -48,27 +48,32 @@ if st.button("Genereer Cladogram"):
     n_species = len(df)
     clusters = {i: [i] for i in range(n_species)}
     
+    # We houden bij welke eigenschappen we al getoond hebben om dubbelingen te voorkomen
+    getoonde_eigenschappen = set()
+
     for i, merge in enumerate(Z):
         node_id = n_species + i
-        # Haal de twee takken op die samenkomen
         child1, child2 = int(merge[0]), int(merge[1])
         members = clusters[child1] + clusters[child2]
         clusters[node_id] = members
         
         # Welke eigenschappen delen deze leden?
         common_traits = df.iloc[members].all()
-        traits_list = common_traits[common_traits].index.tolist()
+        traits_list = [t for t in common_traits[common_traits].index.tolist() if t not in getoonde_eigenschappen]
         
-        # Haal de X en Y coordinaten op (midden van de horizontale lijn)
+        # Haal de X en Y coordinaten op voor het horizontale middenstuk
+        # ddata['icoord'][i] en ddata['dcoord'][i] zijn lijsten van 4 punten
         x_val = 0.5 * (ddata['icoord'][i][1] + ddata['icoord'][i][2])
-        y_val = ddata['dcoord'][i]
+        y_val = ddata['dcoord'][i][1] # De hoogte van de horizontale lijn
         
         if traits_list:
-            # Teken de stip en de tekst
-            ax.plot(float(x_val), float(y_val), 'ro', markersize=6)
+            ax.plot(x_val, y_val, 'ro', markersize=6)
             ax.annotate(", ".join(traits_list), (x_val, y_val), 
                          xytext=(5, 5), textcoords='offset points', 
                          fontsize=9, color='blue', fontweight='bold')
+            # Voeg toe aan getoond zodat ze niet lager in de boom weer verschijnen
+            for t in traits_list:
+                getoonde_eigenschappen.add(t)
 
     plt.xticks(rotation=45, ha='right')
     plt.tight_layout()
